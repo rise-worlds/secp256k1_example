@@ -26,10 +26,15 @@ int main() {
     result = secp256k1_context_randomize(ctx, seed);  //随机化
     std::cout << "random:" << result << std::endl;
 
+    result = secp256k1_ec_seckey_verify(ctx, key);
+    std::cout << "pvtkey verify:" << result << std::endl;
+
     //创建根据私钥生成公钥
     pubkeylen = 33;
     result = secp256k1_ec_pubkey_create(ctx, pubkey, &pubkeylen, key, 1);
-    std::cout << "pubkey:" << result << std::endl;
+    std::cout << "pubkey create:" << result << std::endl;
+    result = secp256k1_ec_pubkey_verify(ctx, pubkey, pubkeylen);
+    std::cout << "pubkey verify:" << result << std::endl;
 
     //使用私钥签名 实际是对数据的sha256哈希值签名
     siglen = 72;
@@ -37,6 +42,15 @@ int main() {
     std::cout << "sign:" << result << std::endl;
     result = secp256k1_ecdsa_verify(ctx, msg, sig, siglen, pubkey, pubkeylen);
     std::cout << "verify:" << result << std::endl;
+
+    //还原公钥
+    int recid = 0;
+    result = secp256k1_ecdsa_sign_compact(ctx, msg, sig, key, nullptr, nullptr, &recid);
+    std::cout << "sign compact:" << result << " recid: " << recid << std::endl;
+    result = secp256k1_ecdsa_recover_compact(ctx, msg, sig, pubkey, &pubkeylen, 1, recid);
+    std::cout << "recover pubkey:" << result << " recid: " << recid << std::endl;
+    result = secp256k1_ec_pubkey_verify(ctx, pubkey, pubkeylen);
+    std::cout << "pubkey verify:" << result << std::endl;
 
     //销毁context
     secp256k1_context_destroy(ctx);
